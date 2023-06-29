@@ -30,7 +30,7 @@ private:
     void logInfo(const QString& message);
     void setStatus(const QString& status);
     void uploadFile(uintptr_t moduleBase, const QString& path);
-    void displayReport(QJsonObject data, const QString& jsonPath);
+    void displayReport(QJsonObject data, const QString& jsonPath, uintptr_t loadedBase);
     QString getReportJsonPath(uintptr_t base);
 
 private slots:
@@ -41,8 +41,7 @@ private slots:
     void on_buttonOptions_clicked();
     void on_actionLogin_triggered();
     void on_comboModules_currentIndexChanged(int index);
-
-    void on_editReport_anchorClicked(const QUrl &arg1);
+    void on_editReport_anchorClicked(const QUrl& url);
 
 private:
     Ui::PluginMainWindow* ui = nullptr;

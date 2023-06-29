@@ -19,8 +19,11 @@ Requirements:
 */
 struct MalcoreAnalysis
 {
-    MalcoreAnalysis(QJsonObject root)
+    MalcoreAnalysis(QJsonObject root, uintptr_t loadedBase, uintptr_t headerBase, uintptr_t imageSize)
         : mData(std::move(root))
+          , mLoadedBase(loadedBase)
+          , mHeaderBase(headerBase)
+          , mImageSize(imageSize)
     {
         open("head");
         open("style");
@@ -201,7 +204,7 @@ private:
             QJsonObject entry = analysis[i].toObject();
             auto location = entry["location"].toString();
 
-            auto makeAddressLink = [](const QString& str)
+            auto makeAddressLink = [this](const QString& str)
             {
                 // TODO: find all 0x prefixes and do this conversion
                 bool ok = false;
@@ -212,6 +215,13 @@ private:
                 }
                 else
                 {
+                    // Adjust the value to the loaded module base if applicable
+                    if(value >= mHeaderBase && value < mHeaderBase + mImageSize)
+                    {
+                        value -= mHeaderBase;
+                        value += mLoadedBase;
+                    }
+
                     char hex[64]="";
                     sprintf_s(hex, "0x%llX", value);
                     QString result = "<a href=\"address://";
@@ -286,4 +296,7 @@ private:
 private:
     QString mReport;
     QJsonObject mData;
+    uintptr_t mLoadedBase;
+    uintptr_t mHeaderBase;
+    uintptr_t mImageSize;
 };

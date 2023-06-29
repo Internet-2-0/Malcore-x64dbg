@@ -78,6 +78,17 @@ static QString getModulePath(duint base)
     return QString::fromUtf8(pathUtf8);
 }
 
+static bool getHeaderInfo(uintptr_t base, uintptr_t& headerBase, uintptr_t& imageSize)
+{
+    // NOTE: there currently isn't a function for this in the SDK
+    char expr[256];
+    sprintf_s(expr, "mod.headerva(%p)", base);
+    bool success = false;
+    headerBase = DbgEval(expr, &success);
+    imageSize = Script::Module::SizeFromAddr(base);
+    return success && imageSize != 0;
+}
+
 void PluginMainWindow::pluginEvent(QtPlugin::EventType event, const QVariant& data)
 {
     switch(event)
@@ -246,6 +257,7 @@ void PluginMainWindow::pollTimerSlot()
 
                     // Cache the report
                     auto jsonPath = getReportJsonPath(mPollModule);
+                    auto loadedBase = mPollModule;
                     {
                         QFile f(jsonPath);
                         if(f.open(QIODevice::WriteOnly))
@@ -253,7 +265,7 @@ void PluginMainWindow::pollTimerSlot()
                     }
                     mPollUuid.clear();
                     mPollModule = 0;
-                    displayReport(std::move(data), jsonPath);
+                    displayReport(std::move(data), jsonPath, loadedBase);
                 }
             }
         }
@@ -406,9 +418,13 @@ void PluginMainWindow::uploadFile(uintptr_t moduleBase, const QString& path)
     setStatus("Upload started!");
 }
 
-void PluginMainWindow::displayReport(QJsonObject data, const QString& jsonPath)
+void PluginMainWindow::displayReport(QJsonObject data, const QString& jsonPath, uintptr_t loadedBase)
 {
-    MalcoreAnalysis analysis(std::move(data));
+    uintptr_t headerBase = 0;
+    uintptr_t imageSize = 0;
+    getHeaderInfo(loadedBase, headerBase, imageSize);
+
+    MalcoreAnalysis analysis(std::move(data), loadedBase, headerBase, imageSize);
     auto html = analysis.getReportHtml();
     if(!jsonPath.isEmpty())
     {
@@ -488,7 +504,7 @@ void PluginMainWindow::on_actionExampleReport_triggered()
         return;
 
     auto root = QJsonDocument::fromJson(f.readAll()).object();
-    displayReport(std::move(root["data"].toObject()), QString());
+    displayReport(std::move(root["data"].toObject()), QString(), 0);
 }
 
 void PluginMainWindow::on_buttonOptions_clicked()
@@ -520,7 +536,7 @@ void PluginMainWindow::on_comboModules_currentIndexChanged(int index)
         return;
 
     auto root = QJsonDocument::fromJson(f.readAll()).object();
-    displayReport(std::move(root["data"].toObject()), jsonPath);
+    displayReport(std::move(root["data"].toObject()), jsonPath, base);
 }
 
 void PluginMainWindow::on_editReport_anchorClicked(const QUrl& url)
