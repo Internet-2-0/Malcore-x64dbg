@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file>images/icon.png</file>
+    </qresource>
+    <qresource prefix="/">
+        <file>example-report.json</file>
+    </qresource>
+</RCC>
