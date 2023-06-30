@@ -10,6 +10,8 @@ This [x64dbg](https://source.x64dbg.com) plugin adds a tab where you can upload 
 
 1. Download the [latest release](https://github.com/internet-2-0/Malcore-x64dbg/releases/latest).
 2. Extract the archive to your x64dbg installation directory.
+3. Sign up for an account on Malcore via the "register" button or through [this](https://link.malcore.io/register/x64dbg) link
+4. Login and enjoy
 
 ## Compilation
 
